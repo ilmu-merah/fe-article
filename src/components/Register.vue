@@ -51,6 +51,10 @@
     }
 
     const handleRegister = async()=> {
+        if(form.password == '' || checkPassword.value){
+            return
+        }
+
         isLoading.value = true
         messageError.value = ''
 
