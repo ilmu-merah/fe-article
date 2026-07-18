@@ -1,77 +1,195 @@
 <template>
     <div class="register-container">
         <h2>Bergabung Bersama Kami</h2>
+
         <form @submit.prevent="handleRegister">
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" name="email" id="email" placeholder="Masukkan email Anda..." required v-model="form.email">
-            </div>
-            <p v-if="messageError" class="text-error">{{ messageError }}</p>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" name="password" id="password" placeholder="Masukkan password..." required v-model="form.password" @input="checkInputPassword">
+                <label for="fullname">
+                    Nama Lengkap
+                </label>
+
+                <input
+                    type="text"
+                    id="fullname"
+                    name="fullname"
+                    placeholder="Masukkan nama lengkap..."
+                    required
+                    v-model="form.fullname"
+                >
             </div>
+
 
             <div class="form-group">
-                <label for="confirm-password">Konfirmasi Password</label>
-                <input type="password" name="confirm-password" id="confirm-password" placeholder="Konfirmasi password..." required v-model="form.confirmPassword" @input="checkInputPassword">
-            </div>
-            <p v-if="checkPassword" class="text-error">Password berbeda!</p>
+                <label for="username">
+                    Username
+                </label>
 
-            <button type="submit">
-                {{ isLoading? 'Sedang masuk...' : 'Masuk' }}
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    placeholder="Masukkan username..."
+                    required
+                    v-model="form.username"
+                >
+            </div>
+
+
+            <div class="form-group">
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Masukkan email..."
+                    required
+                    v-model="form.email"
+                >
+            </div>
+
+
+            <div class="form-group">
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Masukkan password..."
+                    required
+                    v-model="form.password"
+                >
+            </div>
+
+
+            <div class="form-group">
+                <label for="confirm-password">
+                    Konfirmasi Password
+                </label>
+
+                <input
+                    type="password"
+                    id="confirm-password"
+                    name="confirm-password"
+                    placeholder="Konfirmasi password..."
+                    required
+                    v-model="form.confirmPassword"
+                >
+            </div>
+
+
+            <p v-if="messageError" class="text-error">
+                {{ messageError }}
+            </p>
+
+
+            <button
+                type="submit"
+                :disabled="isLoading"
+            >
+                {{ isLoading ? 'Mendaftarkan...' : 'Daftar' }}
             </button>
+
         </form>
     </div>
 </template>
 
+
 <script setup>
-    import {ref, reactive} from 'vue'
-    import { useRouter } from 'vue-router';
+import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
-    const router = useRouter()
 
-    const form = reactive({
-        email: '',
-        password: '',
-        confirmPassword: ''
-    })
+const router = useRouter()
 
-    const isLoading = ref(false)
-    const messageError = ref('')
-    const checkPassword = ref(false)
 
-    const checkInputPassword = () => {
-        if(form.password == form.confirmPassword){
-            checkPassword.value = false
-        } else {
-            checkPassword.value = true
-        }
+const form = reactive({
+    fullname: '',
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+})
+
+
+const isLoading = ref(false)
+const messageError = ref('')
+
+
+const isPasswordDifferent = computed(() => {
+    return form.password !== form.confirmPassword
+})
+
+
+const handleRegister = async () => {
+
+    if (isPasswordDifferent.value) {
+        messageError.value =
+            'Password dan konfirmasi password harus sama.'
+
+        return
     }
 
-    const handleRegister = async()=> {
-        if(form.password == '' || checkPassword.value){
-            return
-        }
+    isLoading.value = true
+    messageError.value = ''
 
-        isLoading.value = true
-        messageError.value = ''
 
-        try{
-            await new Promise((resolve)=> setTimeout(resolve, 1500))
-            if(form.email != 'user@gmail.com'){
-                alert("Registrasi berhasil!")
-                router.push("/")
-            }else{
-                throw new Error("Email sudah diginakan")
+    try {
+
+        const response = await fetch(
+            'https://localhost:8080/api/auth/register',
+            {
+                method: 'POST',
+
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+
+                body: JSON.stringify({
+                    Fullname: form.fullname,
+                    Username: form.username,
+                    Email: form.email,
+                    Password: form.password
+                })
             }
-        }catch(error){
-            messageError.value = error.message
-        }finally{
-            isLoading.value = false
+        )
+
+
+        if (!response.ok) {
+            throw new Error('Registrasi gagal')
         }
+
+
+        const data = await response.json()
+
+        console.log('Response dari server:', data)
+
+
+        alert('Registrasi berhasil!')
+
+
+        router.push('/')
+
+
+    } catch (error) {
+
+        console.error(error)
+
+        messageError.value =
+            'Terjadi kesalahan saat melakukan registrasi.'
+
+    } finally {
+
+        isLoading.value = false
+
     }
+}
 </script>
 
 <style scoped>
